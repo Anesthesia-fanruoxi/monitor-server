@@ -13,8 +13,8 @@ import (
 )
 
 // 固定的加密盐（密钥）
-var encryptionKey = []byte("KnV3FWEWqjNyCO5Yxb4QRdCBX6D4jE0x") // 必须是 16、24 或 32 字节长度
-var mu sync.Mutex                                              // 定义一个全局的 Mutex
+var encryptionKey = []byte("111111111111") // 必须是 16、24 或 32 字节长度
+var mu sync.Mutex                          // 定义一个全局的 Mutex
 
 // 解密数据
 func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
