@@ -11,9 +11,8 @@ import (
 
 // 域名白名单
 var allowedDomains = []string{
-	"hzbxhd.tpddns.cn",
+	"www.baidu.com",
 	"192.168.100.110",
-	"192.168.100.39",
 }
 
 // 动态缓存域名解析的 IP 地址
