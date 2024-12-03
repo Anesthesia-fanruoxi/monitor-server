@@ -9,18 +9,19 @@ import (
 	"time"
 )
 
-// 域名白名单
-var allowedDomains = []string{
-	"www.baidu.com",
-	"192.168.100.110",
-}
-
-// 动态缓存域名解析的 IP 地址
+// 定义允许的域名
+var allowedDomains []string
 var domainIPCache = struct {
 	mapping map[string][]string
 	mutex   sync.RWMutex
 }{
 	mapping: make(map[string][]string),
+}
+
+// 设置允许的域名
+func SetAllowedDomains(domains []string) {
+	allowedDomains = domains
+	log.Printf("已设置允许的域名: %v", allowedDomains)
 }
 
 // 定期解析域名并更新缓存

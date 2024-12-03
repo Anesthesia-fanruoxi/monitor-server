@@ -13,7 +13,6 @@ import (
 )
 
 var projectNameDict map[string]string
-var EnableLog bool = false
 
 // 处理 namespace，去掉 -v1 或 -v2
 func cleanNamespace(namespace string) string {
@@ -23,12 +22,6 @@ func cleanNamespace(namespace string) string {
 		return namespace[:len(namespace)-3] // 去掉 -v2
 	}
 	return namespace
-}
-
-func logMetricUpdate(metricName, label, projectName string, value float64) {
-	if EnableLog {
-		log.Printf("更新指标: %s, 标签: %s, 项目: %s, 值: %f", metricName, label, projectName, value)
-	}
 }
 
 // 读取配置文件的函数

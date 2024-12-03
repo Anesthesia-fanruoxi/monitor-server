@@ -1,0 +1,8 @@
+# 配置文件
+
+# 加密盐
+
+encrypted: "yiDoETicN1M06v7pb1zdhSc3QFOFOaRq"  # 填入您的加密盐
+ipPass:
+  - www.baidu.com
+  - 192.168.100.110
