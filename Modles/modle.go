@@ -48,17 +48,18 @@ type SslSource struct {
 }
 
 type ContainerResource struct {
-	Namespace      string  `json:"namespace"`
-	PodName        string  `json:"podName"`
-	ControllerName string  `json:"controllerName"`
-	Container      string  `json:"container"`
-	LimitCpu       float64 `json:"limitCpu"`      // CPU 核心数
-	LimitMemory    int64   `json:"limitMemory"`   // 内存字节数
-	RequestCpu     float64 `json:"requestCpu"`    // CPU 核心数
-	RequestMemory  int64   `json:"requestMemory"` // 内存字节数
-	UseCpu         float64 `json:"useCpu"`        // 使用的 CPU 核心数
-	UseMemory      int64   `json:"useMemory"`     // 使用的内存字节数
-	RestartCount   int     `json:"restartCount"`  // 重启次数
+	Namespace           string  `json:"namespace"`
+	PodName             string  `json:"podName"`
+	ControllerName      string  `json:"controllerName"`
+	Container           string  `json:"container"`
+	LimitCpu            float64 `json:"limitCpu"`      // CPU 核心数
+	LimitMemory         int64   `json:"limitMemory"`   // 内存字节数
+	RequestCpu          float64 `json:"requestCpu"`    // CPU 核心数
+	RequestMemory       int64   `json:"requestMemory"` // 内存字节数
+	UseCpu              float64 `json:"useCpu"`        // 使用的 CPU 核心数
+	UseMemory           int64   `json:"useMemory"`     // 使用的内存字节数
+	RestartCount        int     `json:"restartCount"`  // 重启次数
+	LastTerminationTime int64   `json:"lastTerminationTime"`
 }
 type ControllerResource struct {
 	Namespace           string `json:"namespace"`

@@ -91,7 +91,7 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 		return
 	}
 
-	//log.Println(string(decryptedData))
+	log.Println(string(decryptedData))
 	// 将解密后的 JSON 解析为 map
 	var payload map[string]interface{}
 	if err := json.Unmarshal(decryptedData, &payload); err != nil {

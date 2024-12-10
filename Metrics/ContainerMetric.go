@@ -47,4 +47,12 @@ var (
 		},
 		[]string{"namespace", "podName", "container", "controllerName", "project"},
 	)
+	// 定义容器重启次数指标
+	ContainerLastTerminationTimeMetric = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_last_termination_time", // 容器重启次数
+			Help: "容器重启时间",
+		},
+		[]string{"namespace", "podName", "container", "controllerName", "project"},
+	)
 )

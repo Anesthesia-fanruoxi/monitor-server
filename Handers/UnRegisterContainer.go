@@ -55,6 +55,7 @@ func CheckContainerHeartbeats() {
 				Metrics.ContainerCpuLimitMetric.DeleteLabelValues(namespace, podName, container, controllerName, project)
 				Metrics.ContainerMemoryLimitMetric.DeleteLabelValues(namespace, podName, container, controllerName, project)
 				Metrics.ContainerRestartCountMetric.DeleteLabelValues(namespace, podName, container, controllerName, project)
+				Metrics.ContainerLastTerminationTimeMetric.DeleteLabelValues(namespace, podName, container, controllerName, project)
 				log.Printf("已删除标签为：%s", metricLabel)
 			} else {
 				log.Printf("标签 %s 格式不正确，跳过注销", metricLabel)

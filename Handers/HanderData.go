@@ -200,6 +200,7 @@ func HandleContainerResourceData(data []interface{}, project string) {
 		Metrics.ContainerCpuLimitMetric.WithLabelValues(containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName).Set(containerResource.LimitCpu)
 		Metrics.ContainerMemoryLimitMetric.WithLabelValues(containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName).Set(float64(containerResource.LimitMemory))
 		Metrics.ContainerRestartCountMetric.WithLabelValues(containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName).Set(float64(containerResource.RestartCount))
+		Metrics.ContainerLastTerminationTimeMetric.WithLabelValues(containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName).Set(float64(containerResource.LastTerminationTime))
 
 		UpdateContainerMetricWithTimestamp(fmt.Sprintf("%s_%s_%s_%s_%s", containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName))
 	}
