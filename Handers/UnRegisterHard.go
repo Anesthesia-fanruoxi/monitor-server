@@ -4,11 +4,12 @@ import (
 	"log"
 	"monitor-server/Metrics"
 	"strings"
+	"sync"
 	"time"
 )
 
 // 用来存储时间戳和指标名称的 map
-var HardTimestamp = make(map[string]time.Time)
+var HardTimestamp = sync.Map{}
 
 // 反解析 label 字符串并更新数据
 func parseHardLabel(metricLabel string) (string, string) {
@@ -27,8 +28,19 @@ func CheckHardHeartbeats() {
 
 	currentTime := time.Now()
 
-	// 遍历所有存储的时间戳，检查是否有超过 10 秒未更新的数据
-	for metricLabel, timestamp := range HardTimestamp {
+	// 使用 Range 遍历所有存储的时间戳，检查是否有超过 10 秒未更新的数据
+	HardTimestamp.Range(func(key, value interface{}) bool {
+		metricLabel, ok := key.(string)
+		if !ok {
+			log.Printf("标签格式不正确，跳过")
+			return true
+		}
+
+		timestamp, ok := value.(time.Time)
+		if !ok {
+			log.Printf("时间戳格式不正确，跳过")
+			return true
+		}
 		// 如果超过 10 秒没有更新
 		if currentTime.Sub(timestamp) > 10*time.Second {
 			// 反解析 metricLabel 获取各个标签的值
@@ -54,9 +66,10 @@ func CheckHardHeartbeats() {
 			}
 
 			// 删除时间戳
-			delete(HardTimestamp, metricLabel)
+			HardTimestamp.Delete(metricLabel)
 		}
-	}
+		return true
+	})
 
 }
 
@@ -65,6 +78,6 @@ func UpdateHardMetricWithTimestamp(metricLabel string) {
 	// 获取当前时间
 	currentTime := time.Now()
 	// 存储时间戳
-	HardTimestamp[metricLabel] = currentTime
+	HardTimestamp.Store(metricLabel, currentTime)
 
 }

@@ -165,7 +165,7 @@ func HandleSSLData(data []interface{}, project string) {
 		Metrics.SslDaysLeftMetric.WithLabelValues(sslData.Domain, sslData.Comment, sslData.Status, resolve, projectName).Set(float64(sslData.DaysLeft))
 
 		// 存储时间戳
-		sslTimestamp[metricLabel] = time.Now()
+		sslTimestamp.Store(metricLabel, time.Now())
 
 	}
 }
@@ -207,7 +207,6 @@ func HandleContainerResourceData(data []interface{}, project string) {
 
 // 更新心跳数据
 func HandleHeartData(data []interface{}, project string) {
-	currentTime := time.Now()
 	projectName := projectNameDict[project]
 	if projectName == "" {
 		// 如果字典中没有找到对应的中文名称，使用原值
@@ -243,7 +242,7 @@ func HandleHeartData(data []interface{}, project string) {
 			Metrics.IsActiveMetric.WithLabelValues(heartData.Hostname, projectName).Set(float64(heartData.IsActive))
 			metricLabel := fmt.Sprintf("%s_%s", hardData.HostName, projectName)
 
-			agentHeartbeatTimes[metricLabel] = currentTime
+			agentHeartbeatTimes.Store(metricLabel, time.Now())
 		}
 	}
 }

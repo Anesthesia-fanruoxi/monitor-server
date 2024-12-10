@@ -4,13 +4,12 @@ import (
 	"log"
 	"monitor-server/Metrics"
 	"strings"
+	"sync"
 	"time"
 )
 
 // 用来存储时间戳和指标名称的 map
-var ControllerTimestamp = make(map[string]time.Time)
-
-//var Controllermu sync.Mutex // 添加一个锁来保护 ControllerTimestamp
+var ControllerTimestamp = sync.Map{}
 
 // 反解析 label 字符串并更新数据
 func parseControllerLabel(metricLabel string) (string, string, string, string) {
@@ -29,9 +28,19 @@ func CheckControllerHeartbeats() {
 
 	currentTime := time.Now()
 
-	// 遍历所有存储的时间戳，检查是否有超过 10 秒未更新的数据
-	for metricLabel, timestamp := range ControllerTimestamp {
-		// 如果超过 10 秒没有更新
+	// 使用 Range 遍历所有存储的时间戳，检查是否有超过 10 秒未更新的数据
+	ControllerTimestamp.Range(func(key, value interface{}) bool {
+		metricLabel, ok := key.(string)
+		if !ok {
+			log.Printf("标签格式不正确，跳过")
+			return true
+		}
+
+		timestamp, ok := value.(time.Time)
+		if !ok {
+			log.Printf("时间戳格式不正确，跳过")
+			return true
+		}
 		if currentTime.Sub(timestamp) > 10*time.Second {
 			// 反解析 metricLabel 获取各个标签的值
 			namespace, continer, ControllerType, project := parseControllerLabel(metricLabel)
@@ -48,9 +57,10 @@ func CheckControllerHeartbeats() {
 			}
 
 			// 删除时间戳
-			delete(ControllerTimestamp, metricLabel)
+			ControllerTimestamp.Delete(metricLabel)
 		}
-	}
+		return true
+	})
 }
 
 // 更新指标并记录时间戳
@@ -58,5 +68,5 @@ func UpdateControllerMetricWithTimestamp(metricLabel string) {
 	// 获取当前时间
 	currentTime := time.Now()
 	// 存储时间戳
-	ControllerTimestamp[metricLabel] = currentTime
+	ControllerTimestamp.Store(metricLabel, currentTime)
 }

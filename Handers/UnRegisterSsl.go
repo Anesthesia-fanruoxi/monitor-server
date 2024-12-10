@@ -4,10 +4,11 @@ import (
 	"log"
 	"monitor-server/Metrics"
 	"strings"
+	"sync"
 	"time"
 )
 
-var sslTimestamp = make(map[string]time.Time)
+var sslTimestamp = sync.Map{}
 
 // 反解析 label 字符串并更新 SSL 数据
 func parseSSLLabel(metricLabel string) (string, string, string, string, string) {
@@ -26,7 +27,19 @@ func parseSSLLabel(metricLabel string) (string, string, string, string, string) 
 func CheckSSLHeartbeats() {
 
 	currentTime := time.Now()
-	for metricLabel, timestamp := range sslTimestamp {
+	// 使用 Range 遍历所有存储的时间戳，检查是否有超过 10 秒未更新的数据
+	sslTimestamp.Range(func(key, value interface{}) bool {
+		metricLabel, ok := key.(string)
+		if !ok {
+			log.Printf("标签格式不正确，跳过")
+			return true
+		}
+
+		timestamp, ok := value.(time.Time)
+		if !ok {
+			log.Printf("时间戳格式不正确，跳过")
+			return true
+		}
 		// 如果超过 10 秒没有更新
 		if currentTime.Sub(timestamp) > 10*time.Second {
 			// 反解析 metricLabel 获取各个标签的值
@@ -38,10 +51,11 @@ func CheckSSLHeartbeats() {
 				Metrics.SslDaysLeftMetric.DeleteLabelValues(domain, comment, status, resolve, projectName)
 
 				// 删除时间戳
-				delete(sslTimestamp, metricLabel) // 删除时间戳
+				sslTimestamp.Delete(metricLabel) // 删除时间戳
 			} else {
 				log.Printf("标签 %s 格式不正确，跳过注销", metricLabel)
 			}
 		}
-	}
+		return true
+	})
 }

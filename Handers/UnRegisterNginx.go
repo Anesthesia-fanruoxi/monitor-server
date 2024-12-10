@@ -4,11 +4,12 @@ import (
 	"log"
 	"monitor-server/Metrics"
 	"strings"
+	"sync"
 	"time"
 )
 
 // 用来存储时间戳和指标名称的 map
-var NginxTimestamp = make(map[string]time.Time)
+var NginxTimestamp = sync.Map{}
 
 // 反解析 label 字符串并更新数据
 func parseNginxLabel(metricLabel string) (string, string) {
@@ -27,8 +28,19 @@ func CheckNginxHeartbeats() {
 
 	currentTime := time.Now()
 
-	// 遍历所有存储的时间戳，检查是否有超过 10 秒未更新的数据
-	for metricLabel, timestamp := range NginxTimestamp {
+	// 使用 Range 遍历所有存储的时间戳，检查是否有超过 10 秒未更新的数据
+	NginxTimestamp.Range(func(key, value interface{}) bool {
+		metricLabel, ok := key.(string)
+		if !ok {
+			log.Printf("标签格式不正确，跳过")
+			return true
+		}
+
+		timestamp, ok := value.(time.Time)
+		if !ok {
+			log.Printf("时间戳格式不正确，跳过")
+			return true
+		}
 		// 如果超过 10 秒没有更新
 		if currentTime.Sub(timestamp) > 10*time.Second {
 			// 反解析 metricLabel 获取各个标签的值
@@ -55,9 +67,10 @@ func CheckNginxHeartbeats() {
 			}
 
 			// 删除时间戳
-			delete(NginxTimestamp, metricLabel)
+			NginxTimestamp.Delete(metricLabel)
 		}
-	}
+		return true
+	})
 
 }
 
@@ -67,6 +80,6 @@ func UpdateNginxMetricWithTimestamp(metricLabel string) {
 	currentTime := time.Now()
 
 	// 存储时间戳
-	NginxTimestamp[metricLabel] = currentTime
+	NginxTimestamp.Store(metricLabel, currentTime)
 
 }
