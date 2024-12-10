@@ -21,23 +21,19 @@ func parseHeartbeatLabel(metricLabel string) (string, string) {
 
 // 定期检查超时的心跳数据
 func CheckHeartbeats() {
-	ticker := time.NewTicker(5 * time.Second) // 每 5 秒检查一次
-	go func() {
-		for {
-			<-ticker.C
-			currentTime := time.Now()
 
-			// 遍历 agentHeartbeatTimes 以检查每个 agent 的心跳状态
-			for metricLabel, lastHeartbeat := range agentHeartbeatTimes {
-				// 反解析 metricLabel 获取 hostname 和 project
-				hostname, project := parseHeartbeatLabel(metricLabel)
+	currentTime := time.Now()
 
-				// 如果超过 10 秒没有接收到心跳
-				if currentTime.Sub(lastHeartbeat) > 10*time.Second {
-					// 设置 IsActive 为 0，表示该 agent 已经不活跃
-					Metrics.IsActiveMetric.WithLabelValues(hostname, project).Set(0)
-				}
-			}
+	// 遍历 agentHeartbeatTimes 以检查每个 agent 的心跳状态
+	for metricLabel, lastHeartbeat := range agentHeartbeatTimes {
+		// 反解析 metricLabel 获取 hostname 和 project
+		hostname, project := parseHeartbeatLabel(metricLabel)
+
+		// 如果超过 10 秒没有接收到心跳
+		if currentTime.Sub(lastHeartbeat) > 10*time.Second {
+			// 设置 IsActive 为 0，表示该 agent 已经不活跃
+			Metrics.IsActiveMetric.WithLabelValues(hostname, project).Set(0)
 		}
-	}()
+	}
+
 }

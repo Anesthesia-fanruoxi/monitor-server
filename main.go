@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 	"log"
 	"monitor-server/Handers"
@@ -10,6 +12,8 @@ import (
 	"monitor-server/Metrics"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 )
 
 // 配置结构体
@@ -34,8 +38,81 @@ func loadConfig(configFile string) (*Config, error) {
 	return &config, nil
 }
 
+// 动态加载配置并监听变化
+func loadConfigWithViper() {
+	viper.SetConfigFile("config.yaml")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("配置文件读取失败: %v", err)
+	}
+
+	// 监听配置文件变化
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		log.Printf("配置文件已更新: %v", e.Name)
+		Handers.SetEncryptionKey(viper.GetString("encrypted"))
+		IpPass.SetAllowedDomains(viper.GetStringSlice("ipPass"))
+	})
+}
+
+// 启动定时任务和心跳检查
+func startHeartbeatChecks(wg *sync.WaitGroup) {
+	// 启动多线程处理
+	wg.Add(7)
+
+	// 启动 goroutine
+	go func() {
+		defer wg.Done()
+		for {
+			Handers.CheckContainerHeartbeats()
+			time.Sleep(5 * time.Second) // 每 5 秒检查一次
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for {
+			Handers.CheckHardHeartbeats()
+			time.Sleep(5 * time.Second) // 每 5 秒检查一次
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for {
+			Handers.CheckHeartbeats()
+			time.Sleep(5 * time.Second) // 每 5 秒检查一次
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for {
+			Handers.CheckSSLHeartbeats()
+			time.Sleep(5 * time.Second) // 每 5 秒检查一次
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for {
+			Handers.CheckControllerHeartbeats()
+			time.Sleep(5 * time.Second) // 每 5 秒检查一次
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for {
+			Handers.CheckNginxHeartbeats()
+			time.Sleep(5 * time.Second) // 每 5 秒检查一次
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for {
+			IpPass.RefreshDomainIPCache()
+			time.Sleep(5 * time.Second) // 每 5 秒检查一次
+		}
+	}()
+}
+
 func main() {
-	// 读取配置文件
+	// 加载配置文件
 	config, err := loadConfig("config.yaml")
 	if err != nil {
 		log.Fatalf("加载配置失败: %v", err)
@@ -53,15 +130,14 @@ func main() {
 	// 设置 IP 白名单
 	IpPass.SetAllowedDomains(config.IpPass)
 
-	// 启动定时器和心跳检查
-	go IpPass.RefreshDomainIPCache()
-	go Handers.CheckNginxHeartbeats()
-	go Handers.CheckHeartbeats()
-	go Handers.CheckSSLHeartbeats()
-	go Handers.CheckContainerHeartbeats()
-	go Handers.CheckHardHeartbeats()
+	// 启动动态配置加载
+	go loadConfigWithViper()
 
-	// 曝露自定义指标
+	// 启动定时任务和心跳检查
+	var wg sync.WaitGroup
+	go startHeartbeatChecks(&wg)
+
+	// 暴露自定义指标
 	metricsHandler := promhttp.HandlerFor(
 		Metrics.CustomRegistry, // 使用自定义的 Registry
 		promhttp.HandlerOpts{},
@@ -77,5 +153,15 @@ func main() {
 
 	// 启动 HTTP 服务
 	log.Println("服务启动，监听端口 8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	// 启动 HTTP 服务
+	go func() {
+		if err := http.ListenAndServe(":8080", nil); err != nil {
+			log.Fatalf("HTTP 服务启动失败: %v", err)
+		}
+	}()
+
+	// 等待定时任务完成
+	wg.Wait()
+	log.Println("所有定时任务已完成，服务正在运行...")
 }

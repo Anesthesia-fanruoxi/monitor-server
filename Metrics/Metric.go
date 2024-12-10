@@ -39,4 +39,7 @@ func init() {
 	CustomRegistry.MustRegister(ContainerMemoryLimitMetric)
 	CustomRegistry.MustRegister(ContainerRestartCountMetric)
 	CustomRegistry.MustRegister(IsActiveMetric)
+	CustomRegistry.MustRegister(ControllerReplicasMetric)
+	CustomRegistry.MustRegister(ControllerReplicasAvailableMetric)
+	CustomRegistry.MustRegister(ControllerReplicasUnavailableMetric)
 }

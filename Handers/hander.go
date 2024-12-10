@@ -80,7 +80,7 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			// 处理关闭错误
 		}
 	}(r.Body)
 
@@ -91,6 +91,7 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 		return
 	}
 
+	//log.Println(string(decryptedData))
 	// 将解密后的 JSON 解析为 map
 	var payload map[string]interface{}
 	if err := json.Unmarshal(decryptedData, &payload); err != nil {
@@ -120,19 +121,15 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 	// 立即返回成功响应
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"code": 200,
-		"msg":  "ok",
-	}
+	response := map[string]interface{}{"code": 200, "msg": "ok"}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("响应失败: %v", err)
 	}
 
 	// 在后台异步处理数据
 	go func() {
-		// 在调用 HandleContainerResourceData 之前加锁
-		mu.Lock()         // 加锁
-		defer mu.Unlock() // 确保函数结束时解锁
+		mu.Lock()         // 加锁，确保所有后续逻辑串行执行
+		defer mu.Unlock() // 解锁
 
 		// 根据 source 调用对应的处理函数
 		switch source {
@@ -146,6 +143,8 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 			HandleContainerResourceData(data, project)
 		case "heart":
 			HandleHeartData(data, project)
+		case "k8sController":
+			HandleControllertResourceData(data, project)
 		default:
 			log.Printf("不支持的 source 类型: %s", source)
 		}

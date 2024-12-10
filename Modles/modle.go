@@ -61,10 +61,12 @@ type ContainerResource struct {
 	RestartCount   int     `json:"restartCount"`  // 重启次数
 }
 type ControllerResource struct {
-	Namespace      string `json:"namespace"`
-	ControllerName string `json:"controller_name"`
-	Container      string `json:"container"`
-	ReplicaCount   int32  `json:"replica"`
+	Namespace           string `json:"namespace"`
+	Container           string `json:"container"`
+	ControllerType      string `json:"controllerType"`
+	Replicas            int32  `json:"replicas"`
+	ReplicasAvailable   int32  `json:"replicas_available"`
+	ReplicasUnavailable int32  `json:"replicas_unavailable"`
 }
 
 // MetricWithTimestamp 用于存储指标值和最后更新的时间戳
@@ -77,4 +79,19 @@ type HeartSource struct {
 	IsActive int    `json:"isActive"`
 	Project  string `json:"project"`
 	Hostname string `json:"hostname"`
+}
+type EsIpSource struct {
+	IpCount  int    `json:"client_ip_count"`
+	ClientIp string `json:"client_ip"`
+	Project  string `json:"project"`
+}
+type EsCountrySource struct {
+	CountryCount int    `json:"country_name_count"`
+	CountryName  string `json:"country_name"`
+	Project      string `json:"project"`
+}
+type EsUrlSource struct {
+	UrlCount   int    `json:"request_url_count"`
+	RequestUrl string `json:"request_url"`
+	Project    string `json:"project"`
 }

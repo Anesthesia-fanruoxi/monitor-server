@@ -247,3 +247,47 @@ func HandleHeartData(data []interface{}, project string) {
 		}
 	}
 }
+
+// 更新控制器数据
+func HandleControllertResourceData(data []interface{}, project string) {
+	projectName := projectNameDict[project]
+	if projectName == "" {
+		// 如果字典中没有找到对应的中文名称，使用原值
+		projectName = project
+	}
+	for _, item := range data {
+		itemBytes, err := json.Marshal(item)
+		if err != nil {
+			log.Printf("无法序列化 hard data 中的元素: %v", item)
+			continue
+		}
+
+		var controllerData Modles.ControllerResource
+		if err := json.Unmarshal(itemBytes, &controllerData); err != nil {
+			log.Printf("解析硬件数据失败: %v", err)
+			continue
+		}
+		for _, item := range data {
+			itemBytes, err := json.Marshal(item)
+			if err != nil {
+				log.Printf("无法序列化 ssl data 中的元素: %v", item)
+				continue
+			}
+
+			var controllerData Modles.ControllerResource
+			if err := json.Unmarshal(itemBytes, &controllerData); err != nil {
+				log.Printf("解析 SSL 数据失败: %v", err)
+				continue
+			}
+
+			containerNamespace := cleanNamespace(controllerData.Namespace)
+			// 更新 心跳 指标
+			Metrics.ControllerReplicasMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.Replicas))
+			Metrics.ControllerReplicasAvailableMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.ReplicasAvailable))
+			Metrics.ControllerReplicasUnavailableMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.ReplicasUnavailable))
+
+			UpdateControllerMetricWithTimestamp(fmt.Sprintf("%s_%s_%s_%s", containerNamespace, controllerData.Container, controllerData.ControllerType, projectName))
+
+		}
+	}
+}
