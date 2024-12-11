@@ -51,7 +51,6 @@ func CheckControllerHeartbeats() {
 				Metrics.ControllerReplicasMetric.DeleteLabelValues(namespace, continer, ControllerType, project)
 				Metrics.ControllerReplicasAvailableMetric.DeleteLabelValues(namespace, continer, ControllerType, project)
 				Metrics.ControllerReplicasUnavailableMetric.DeleteLabelValues(namespace, continer, ControllerType, project)
-				log.Printf("已删除标签为：%s", metricLabel)
 			} else {
 				log.Printf("标签 %s 格式不正确，跳过注销", metricLabel)
 			}
