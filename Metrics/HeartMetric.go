@@ -11,4 +11,11 @@ var (
 		},
 		[]string{"hostName", "project"}, // 标签
 	)
+	AgentVerisonMetric = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "agent_version", // SSL 证书剩余天数
+			Help: "agnet版本号",
+		},
+		[]string{"hostName", "project"}, // 标签
+	)
 )

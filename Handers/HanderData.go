@@ -241,6 +241,7 @@ func HandleHeartData(data []interface{}, project string) {
 			// 记录时间戳
 			// 更新 心跳 指标
 			Metrics.IsActiveMetric.WithLabelValues(heartData.Hostname, projectName).Set(float64(heartData.IsActive))
+			Metrics.AgentVerisonMetric.WithLabelValues(heartData.Hostname, projectName).Set(float64(heartData.Version))
 			metricLabel := fmt.Sprintf("%s_%s", hardData.HostName, projectName)
 
 			agentHeartbeatTimes.Store(metricLabel, time.Now())

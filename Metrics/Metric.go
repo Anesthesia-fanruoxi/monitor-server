@@ -40,6 +40,7 @@ func init() {
 	CustomRegistry.MustRegister(ContainerRestartCountMetric)
 	CustomRegistry.MustRegister(ContainerLastTerminationTimeMetric)
 	CustomRegistry.MustRegister(IsActiveMetric)
+	CustomRegistry.MustRegister(AgentVerisonMetric)
 	CustomRegistry.MustRegister(ControllerReplicasMetric)
 	CustomRegistry.MustRegister(ControllerReplicasAvailableMetric)
 	CustomRegistry.MustRegister(ControllerReplicasUnavailableMetric)

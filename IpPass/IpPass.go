@@ -27,7 +27,7 @@ func SetAllowedDomains(domains []string) {
 // 定期解析域名并更新缓存
 func RefreshDomainIPCache() {
 	for {
-		log.Println("正在刷新域名解析缓存...")
+		//log.Println("正在刷新域名解析缓存...")
 		for _, domain := range allowedDomains {
 			ips, err := net.LookupHost(domain)
 			if err != nil {
