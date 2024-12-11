@@ -12,7 +12,6 @@ import (
 	"monitor-server/Metrics"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -55,55 +54,45 @@ func loadConfigWithViper() {
 }
 
 // 启动定时任务和心跳检查
-func startHeartbeatChecks(wg *sync.WaitGroup) {
-	// 启动多线程处理
-	wg.Add(7)
-
+func startHeartbeatChecks() {
 	// 启动 goroutine
 	go func() {
-		defer wg.Done()
 		for {
 			Handers.CheckContainerHeartbeats()
 			time.Sleep(5 * time.Second) // 每 5 秒检查一次
 		}
 	}()
 	go func() {
-		defer wg.Done()
 		for {
 			Handers.CheckHardHeartbeats()
 			time.Sleep(5 * time.Second) // 每 5 秒检查一次
 		}
 	}()
 	go func() {
-		defer wg.Done()
 		for {
 			Handers.CheckHeartbeats()
 			time.Sleep(5 * time.Second) // 每 5 秒检查一次
 		}
 	}()
 	go func() {
-		defer wg.Done()
 		for {
 			Handers.CheckSSLHeartbeats()
 			time.Sleep(5 * time.Second) // 每 5 秒检查一次
 		}
 	}()
 	go func() {
-		defer wg.Done()
 		for {
 			Handers.CheckControllerHeartbeats()
 			time.Sleep(5 * time.Second) // 每 5 秒检查一次
 		}
 	}()
 	go func() {
-		defer wg.Done()
 		for {
 			Handers.CheckNginxHeartbeats()
 			time.Sleep(5 * time.Second) // 每 5 秒检查一次
 		}
 	}()
 	go func() {
-		defer wg.Done()
 		for {
 			IpPass.RefreshDomainIPCache()
 			time.Sleep(5 * time.Second) // 每 5 秒检查一次
@@ -112,6 +101,8 @@ func startHeartbeatChecks(wg *sync.WaitGroup) {
 }
 
 func main() {
+
+	//var wg sync.WaitGroup
 	// 加载配置文件
 	config, err := loadConfig("config.yaml")
 	if err != nil {
@@ -134,8 +125,7 @@ func main() {
 	go loadConfigWithViper()
 
 	// 启动定时任务和心跳检查
-	var wg sync.WaitGroup
-	go startHeartbeatChecks(&wg)
+	go startHeartbeatChecks()
 
 	// 暴露自定义指标
 	metricsHandler := promhttp.HandlerFor(
@@ -150,18 +140,8 @@ func main() {
 	http.HandleFunc("/metrics_data", func(w http.ResponseWriter, r *http.Request) {
 		Handers.MetricsHandler(w, r, Metrics.CustomRegistry) // 传递 CustomRegistry
 	})
-
+	http.ListenAndServe(":8080", nil)
 	// 启动 HTTP 服务
 	log.Println("服务启动，监听端口 8080...")
 
-	// 启动 HTTP 服务
-	go func() {
-		if err := http.ListenAndServe(":8080", nil); err != nil {
-			log.Fatalf("HTTP 服务启动失败: %v", err)
-		}
-	}()
-
-	// 等待定时任务完成
-	wg.Wait()
-	log.Println("所有定时任务已完成，服务正在运行...")
 }
