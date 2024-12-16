@@ -1,6 +1,8 @@
 package Handers
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/json"
@@ -52,6 +54,23 @@ func Decrypt(ciphertext []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
+// 解压数据
+func Decompress(data []byte) ([]byte, error) {
+	reader, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	defer func(reader *gzip.Reader) {
+		err := reader.Close()
+		if err != nil {
+
+		}
+	}(reader)
+
+	// 读取解压缩后的内容
+	return io.ReadAll(reader)
+}
+
 // 响应 JSON 错误
 func writeJSONError(w http.ResponseWriter, statusCode int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
@@ -80,7 +99,7 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			// 处理关闭错误
+			log.Printf("关闭请求体失败: %v", err)
 		}
 	}(r.Body)
 
@@ -91,10 +110,17 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 		return
 	}
 
-	//log.Println(string(decryptedData))
-	// 将解密后的 JSON 解析为 map
+	// 解压数据
+	decompressedData, err := Decompress(decryptedData)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "解压失败: "+err.Error())
+		return
+	}
+
+	//log.Println(string(decompressedData))
+	// 将解压后的 JSON 解析为 map
 	var payload map[string]interface{}
-	if err := json.Unmarshal(decryptedData, &payload); err != nil {
+	if err := json.Unmarshal(decompressedData, &payload); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "JSON 解析失败: "+err.Error())
 		return
 	}
