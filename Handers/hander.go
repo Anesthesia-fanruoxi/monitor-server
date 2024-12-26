@@ -102,14 +102,13 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 			log.Printf("关闭请求体失败: %v", err)
 		}
 	}(r.Body)
-
 	// 解密数据
 	decryptedData, err := Decrypt(body)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "解密失败: "+err.Error())
 		return
 	}
-
+	//log.Printf("解密完成: %v", string(decryptedData))
 	// 解压数据
 	decompressedData, err := Decompress(decryptedData)
 	if err != nil {
@@ -117,7 +116,6 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 		return
 	}
 
-	//log.Println(string(decompressedData))
 	// 将解压后的 JSON 解析为 map
 	var payload map[string]interface{}
 	if err := json.Unmarshal(decompressedData, &payload); err != nil {

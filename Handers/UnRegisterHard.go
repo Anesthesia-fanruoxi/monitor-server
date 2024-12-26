@@ -12,15 +12,15 @@ import (
 var HardTimestamp = sync.Map{}
 
 // 反解析 label 字符串并更新数据
-func parseHardLabel(metricLabel string) (string, string) {
+func parseHardLabel(metricLabel string) (string, string, string, string, string) {
 	// 以 "_" 为分隔符分割 label 字符串
 	parts := strings.Split(metricLabel, "_")
-	if len(parts) < 2 {
+	if len(parts) < 5 {
 		log.Printf("标签 %s 无法解析，格式不正确", metricLabel)
-		return "", ""
+		return "", "", "", "", ""
 	}
 	// 重新解析并返回各个字段的值
-	return parts[0], parts[1]
+	return parts[0], parts[1], parts[2], parts[3], parts[4]
 }
 
 // 定期检查超时的心跳数据
@@ -44,23 +44,24 @@ func CheckHardHeartbeats() {
 		// 如果超过 10 秒没有更新
 		if currentTime.Sub(timestamp) > 10*time.Second {
 			// 反解析 metricLabel 获取各个标签的值
-			hostName, project := parseHardLabel(metricLabel)
+			hostName, project, cpuModel, OSVersion, KernelVersion := parseHardLabel(metricLabel)
 
 			// 如果标签解析成功，且字段不为空，则删除相应的指标
 			if hostName != "" && project != "" {
 				// 删除对应的指标
-				Metrics.CpuPercentMetric.DeleteLabelValues(hostName, project)
-				Metrics.DiskTotalMetric.DeleteLabelValues(hostName, project)
-				Metrics.DiskUsedMetric.DeleteLabelValues(hostName, project)
-				Metrics.DiskFreeMetric.DeleteLabelValues(hostName, project)
-				Metrics.DiskUsedPercentMetric.DeleteLabelValues(hostName, project)
-				Metrics.MemoryTotalMetric.DeleteLabelValues(hostName, project)
-				Metrics.MemoryUsedMetric.DeleteLabelValues(hostName, project)
-				Metrics.MemoryFreeMetric.DeleteLabelValues(hostName, project)
-				Metrics.MemoryUsedPercentMetric.DeleteLabelValues(hostName, project)
-				Metrics.CpuLoad1Metric.DeleteLabelValues(hostName, project)
-				Metrics.CpuLoad5Metric.DeleteLabelValues(hostName, project)
-				Metrics.CpuLoad15Metric.DeleteLabelValues(hostName, project)
+				Metrics.CpuPercentMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.DiskTotalMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.DiskUsedMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.DiskFreeMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.DiskUsedPercentMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.MemoryTotalMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.MemoryUsedMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.MemoryFreeMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.MemoryUsedPercentMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.CpuLoad1Metric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.CpuLoad5Metric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.CpuLoad15Metric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
+				Metrics.CpuTotalMetric.DeleteLabelValues(hostName, project, cpuModel, OSVersion, KernelVersion)
 			} else {
 				log.Printf("标签 %s 格式不正确，跳过注销", metricLabel)
 			}

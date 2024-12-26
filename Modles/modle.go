@@ -20,6 +20,10 @@ type HardSource struct {
 	CPULoad1          float64 `json:"cpu_load_1"`
 	CPULoad5          float64 `json:"cpu_load_5"`
 	CPULoad15         float64 `json:"cpu_load_15"`
+	CPUCount          float64 `json:"cpu_count"`
+	CPUModel          string  `json:"cpu_model"`
+	OSVersion         string  `json:"os_version"`
+	KernelVersion     string  `json:"kernel_version"`
 }
 type NginxSource struct {
 	HostName       string `json:"hostName"`

@@ -110,22 +110,29 @@ func HandleHardData(data []interface{}, project string) {
 			log.Printf("解析硬件数据失败: %v", err)
 			continue
 		}
-
+		// 将 `hardData` 转换为 JSON
+		jsonData, err := json.Marshal(hardData)
+		if err != nil {
+			log.Printf("将硬件数据转换为 JSON 失败: %v", err)
+		} else {
+			log.Println(string(jsonData)) // 打印 JSON 格式的数据
+		}
 		// 更新硬件相关指标并打印日志
-		Metrics.CpuPercentMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.CPUPercent)
-		Metrics.DiskTotalMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.DiskTotal)
-		Metrics.DiskUsedMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.DiskUsed)
-		Metrics.DiskFreeMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.DiskFree)
-		Metrics.DiskUsedPercentMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.DiskUsedPercent)
-		Metrics.MemoryTotalMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.MemoryTotal)
-		Metrics.MemoryUsedMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.MemoryUsed)
-		Metrics.MemoryFreeMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.MemoryFree)
-		Metrics.MemoryUsedPercentMetric.WithLabelValues(hardData.HostName, projectName).Set(hardData.MemoryUsedPercent)
-		Metrics.CpuLoad1Metric.WithLabelValues(hardData.HostName, projectName).Set(hardData.CPULoad1)
-		Metrics.CpuLoad5Metric.WithLabelValues(hardData.HostName, projectName).Set(hardData.CPULoad5)
-		Metrics.CpuLoad15Metric.WithLabelValues(hardData.HostName, projectName).Set(hardData.CPULoad15)
+		Metrics.CpuPercentMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPUPercent)
+		Metrics.DiskTotalMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.DiskTotal)
+		Metrics.DiskUsedMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.DiskUsed)
+		Metrics.DiskFreeMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.DiskFree)
+		Metrics.DiskUsedPercentMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.DiskUsedPercent)
+		Metrics.MemoryTotalMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.MemoryTotal)
+		Metrics.MemoryUsedMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.MemoryUsed)
+		Metrics.MemoryFreeMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.MemoryFree)
+		Metrics.MemoryUsedPercentMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.MemoryUsedPercent)
+		Metrics.CpuLoad1Metric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPULoad1)
+		Metrics.CpuLoad5Metric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPULoad5)
+		Metrics.CpuLoad15Metric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPULoad15)
+		Metrics.CpuTotalMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPUCount)
 
-		UpdateHardMetricWithTimestamp(fmt.Sprintf("%s_%s", hardData.HostName, projectName))
+		UpdateHardMetricWithTimestamp(fmt.Sprintf("%s_%s_%s_%s", hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion))
 
 	}
 }

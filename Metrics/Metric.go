@@ -19,6 +19,7 @@ func init() {
 	CustomRegistry.MustRegister(CpuLoad1Metric)
 	CustomRegistry.MustRegister(CpuLoad5Metric)
 	CustomRegistry.MustRegister(CpuLoad15Metric)
+	CustomRegistry.MustRegister(CpuTotalMetric)
 	CustomRegistry.MustRegister(NginxIsRunMetric)
 	CustomRegistry.MustRegister(NginxReTotalMetric)
 	CustomRegistry.MustRegister(NginxLoginUserCountMetric)
@@ -44,4 +45,5 @@ func init() {
 	CustomRegistry.MustRegister(ControllerReplicasMetric)
 	CustomRegistry.MustRegister(ControllerReplicasAvailableMetric)
 	CustomRegistry.MustRegister(ControllerReplicasUnavailableMetric)
+
 }
