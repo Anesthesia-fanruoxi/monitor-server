@@ -101,3 +101,41 @@ type EsUrlSource struct {
 	RequestUrl string `json:"request_url"`
 	Project    string `json:"project"`
 }
+
+// TrafficSwitchingSource 流量切换平台上报数据
+type TrafficSwitchingSource struct {
+	Service string `json:"service"` // 服务名称
+
+	// 累计请求统计
+	TotalRequests    float64     `json:"total_requests"`
+	TotalSuccess     float64     `json:"total_success"`
+	TotalErrors      float64     `json:"total_errors"`
+	TotalSuccessRate interface{} `json:"total_success_rate"` // 兼容字符串或数字
+
+	// 实时统计
+	RealtimeQPS               float64 `json:"realtime_qps"`
+	RealtimeSuccessQPS        float64 `json:"realtime_success_qps"`
+	RealtimeErrorQPS          float64 `json:"realtime_error_qps"`
+	RealtimeActiveConnections float64 `json:"realtime_active_connections"`
+	RealtimeAvgLatencyMs      float64 `json:"realtime_avg_latency_ms"`
+	RealtimeMaxLatencyMs      float64 `json:"realtime_max_latency_ms"`
+
+	// 代理缓存
+	ProxyCacheSize    float64 `json:"proxy_cache_size"`
+	ProxyMaxCacheSize float64 `json:"proxy_max_cache_size"`
+
+	// Runtime
+	RuntimeGoroutines float64 `json:"runtime_goroutines"`
+	RuntimeMemoryMB   float64 `json:"runtime_memory_mb"`
+	RuntimeCPUCores   float64 `json:"runtime_cpu_cores"`
+	RuntimeGomaxprocs float64 `json:"runtime_gomaxprocs"`
+	RuntimeGcCycles   float64 `json:"runtime_gc_cycles"`
+
+	// Transport 配置
+	TransportMaxConnsPerHost     float64 `json:"transport_max_conns_per_host"`
+	TransportMaxIdleConns        float64 `json:"transport_max_idle_conns"`
+	TransportMaxIdleConnsPerHost float64 `json:"transport_max_idle_conns_per_host"`
+
+	// 上报时间戳
+	Timestamp float64 `json:"timestamp"`
+}

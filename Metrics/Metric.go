@@ -5,8 +5,9 @@ import "github.com/prometheus/client_golang/prometheus"
 var CustomRegistry = prometheus.NewRegistry()
 
 // 预先注册静态指标
+// 预先注册静态指标
 func init() {
-	// 注册所有静态指标
+	// ====================== 系统 & 主机指标 ======================
 	CustomRegistry.MustRegister(CpuPercentMetric)
 	CustomRegistry.MustRegister(DiskTotalMetric)
 	CustomRegistry.MustRegister(DiskUsedMetric)
@@ -20,6 +21,8 @@ func init() {
 	CustomRegistry.MustRegister(CpuLoad5Metric)
 	CustomRegistry.MustRegister(CpuLoad15Metric)
 	CustomRegistry.MustRegister(CpuTotalMetric)
+
+	// ====================== Nginx 指标 ======================
 	CustomRegistry.MustRegister(NginxIsRunMetric)
 	CustomRegistry.MustRegister(NginxReTotalMetric)
 	CustomRegistry.MustRegister(NginxLoginUserCountMetric)
@@ -33,6 +36,8 @@ func init() {
 	CustomRegistry.MustRegister(NginxTcpClosedMetric)
 	CustomRegistry.MustRegister(NginxTcpOrphanedMetric)
 	CustomRegistry.MustRegister(NginxTcpTimewaitMetric)
+
+	// ====================== SSL & 容器 & Agent & Controller ======================
 	CustomRegistry.MustRegister(SslDaysLeftMetric)
 	CustomRegistry.MustRegister(ContainerCpuUsageMetric)
 	CustomRegistry.MustRegister(ContainerMemoryUsageMetric)
@@ -46,4 +51,32 @@ func init() {
 	CustomRegistry.MustRegister(ControllerReplicasAvailableMetric)
 	CustomRegistry.MustRegister(ControllerReplicasUnavailableMetric)
 
+	// ====================== TrafficSwitching 业务指标 ======================
+	// 累计统计
+	CustomRegistry.MustRegister(TrafficSwitchingTotalRequests)
+	CustomRegistry.MustRegister(TrafficSwitchingTotalSuccess)
+	CustomRegistry.MustRegister(TrafficSwitchingTotalErrors)
+	CustomRegistry.MustRegister(TrafficSwitchingTotalSuccessRate)
+	// 实时统计
+	CustomRegistry.MustRegister(TrafficSwitchingRealtimeQPS)
+	CustomRegistry.MustRegister(TrafficSwitchingRealtimeSuccessQPS)
+	CustomRegistry.MustRegister(TrafficSwitchingRealtimeErrorQPS)
+	CustomRegistry.MustRegister(TrafficSwitchingRealtimeActiveConnections)
+	CustomRegistry.MustRegister(TrafficSwitchingRealtimeAvgLatencyMs)
+	CustomRegistry.MustRegister(TrafficSwitchingRealtimeMaxLatencyMs)
+	// 缓存
+	CustomRegistry.MustRegister(TrafficSwitchingProxyCacheSize)
+	CustomRegistry.MustRegister(TrafficSwitchingProxyMaxCacheSize)
+	// Runtime
+	CustomRegistry.MustRegister(TrafficSwitchingRuntimeGoroutines)
+	CustomRegistry.MustRegister(TrafficSwitchingRuntimeMemoryMB)
+	CustomRegistry.MustRegister(TrafficSwitchingRuntimeCPUCores)
+	CustomRegistry.MustRegister(TrafficSwitchingRuntimeGomaxprocs)
+	CustomRegistry.MustRegister(TrafficSwitchingRuntimeGcCycles)
+	// Transport
+	CustomRegistry.MustRegister(TrafficSwitchingTransportMaxConnsPerHost)
+	CustomRegistry.MustRegister(TrafficSwitchingTransportMaxIdleConns)
+	CustomRegistry.MustRegister(TrafficSwitchingTransportMaxIdleConnsPerHost)
+	// 时间戳
+	CustomRegistry.MustRegister(TrafficSwitchingTimestamp)
 }

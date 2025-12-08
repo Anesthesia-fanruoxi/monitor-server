@@ -8,6 +8,7 @@ import (
 	"monitor-server/Metrics"
 	"monitor-server/Modles"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -117,7 +118,7 @@ func HandleHardData(data []interface{}, project string) {
 		} else {
 			log.Println(string(jsonData)) // 打印 JSON 格式的数据
 		}
-		// 更新硬件相关指标并打印日志
+		// 更新硬件相关指标
 		Metrics.CpuPercentMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPUPercent)
 		Metrics.DiskTotalMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.DiskTotal)
 		Metrics.DiskUsedMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.DiskUsed)
@@ -210,6 +211,77 @@ func HandleContainerResourceData(data []interface{}, project string) {
 		Metrics.ContainerLastTerminationTimeMetric.WithLabelValues(containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName).Set(float64(containerResource.LastTerminationTime))
 
 		UpdateContainerMetricWithTimestamp(fmt.Sprintf("%s_%s_%s_%s_%s", containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName))
+	}
+}
+func HandleTrafficSwitchingData(data []interface{}, project string) {
+	projectName := projectNameDict[project]
+	if projectName == "" {
+		projectName = project
+	}
+
+	for _, item := range data {
+		itemBytes, err := json.Marshal(item)
+		if err != nil {
+			log.Printf("无法序列化 traffic switching data 中的元素: %v", item)
+			continue
+		}
+
+		var ts Modles.TrafficSwitchingSource
+		if err := json.Unmarshal(itemBytes, &ts); err != nil {
+			log.Printf("解析 traffic switching 数据失败: %v", err)
+			continue
+		}
+
+		service := ts.Service
+
+		// 解析 success_rate（兼容字符串和数字）
+		var successRate float64
+		switch v := ts.TotalSuccessRate.(type) {
+		case float64:
+			successRate = v
+		case string:
+			// 去掉 % 后解析，如 "85.50%" -> 0.855
+			s := strings.TrimSuffix(v, "%")
+			if parsed, err := strconv.ParseFloat(s, 64); err == nil {
+				successRate = parsed / 100.0
+			}
+		}
+
+		// 累计统计
+		Metrics.TrafficSwitchingTotalRequests.WithLabelValues(service, projectName).Set(ts.TotalRequests)
+		Metrics.TrafficSwitchingTotalSuccess.WithLabelValues(service, projectName).Set(ts.TotalSuccess)
+		Metrics.TrafficSwitchingTotalErrors.WithLabelValues(service, projectName).Set(ts.TotalErrors)
+		Metrics.TrafficSwitchingTotalSuccessRate.WithLabelValues(service, projectName).Set(successRate)
+
+		// 实时统计
+		Metrics.TrafficSwitchingRealtimeQPS.WithLabelValues(service, projectName).Set(ts.RealtimeQPS)
+		Metrics.TrafficSwitchingRealtimeSuccessQPS.WithLabelValues(service, projectName).Set(ts.RealtimeSuccessQPS)
+		Metrics.TrafficSwitchingRealtimeErrorQPS.WithLabelValues(service, projectName).Set(ts.RealtimeErrorQPS)
+		Metrics.TrafficSwitchingRealtimeActiveConnections.WithLabelValues(service, projectName).Set(ts.RealtimeActiveConnections)
+		Metrics.TrafficSwitchingRealtimeAvgLatencyMs.WithLabelValues(service, projectName).Set(ts.RealtimeAvgLatencyMs)
+		Metrics.TrafficSwitchingRealtimeMaxLatencyMs.WithLabelValues(service, projectName).Set(ts.RealtimeMaxLatencyMs)
+
+		// 代理缓存
+		Metrics.TrafficSwitchingProxyCacheSize.WithLabelValues(service, projectName).Set(ts.ProxyCacheSize)
+		Metrics.TrafficSwitchingProxyMaxCacheSize.WithLabelValues(service, projectName).Set(ts.ProxyMaxCacheSize)
+
+		// Runtime
+		Metrics.TrafficSwitchingRuntimeGoroutines.WithLabelValues(service, projectName).Set(ts.RuntimeGoroutines)
+		Metrics.TrafficSwitchingRuntimeMemoryMB.WithLabelValues(service, projectName).Set(ts.RuntimeMemoryMB)
+		Metrics.TrafficSwitchingRuntimeCPUCores.WithLabelValues(service, projectName).Set(ts.RuntimeCPUCores)
+		Metrics.TrafficSwitchingRuntimeGomaxprocs.WithLabelValues(service, projectName).Set(ts.RuntimeGomaxprocs)
+		Metrics.TrafficSwitchingRuntimeGcCycles.WithLabelValues(service, projectName).Set(ts.RuntimeGcCycles)
+
+		// Transport 配置
+		Metrics.TrafficSwitchingTransportMaxConnsPerHost.WithLabelValues(service, projectName).Set(ts.TransportMaxConnsPerHost)
+		Metrics.TrafficSwitchingTransportMaxIdleConns.WithLabelValues(service, projectName).Set(ts.TransportMaxIdleConns)
+		Metrics.TrafficSwitchingTransportMaxIdleConnsPerHost.WithLabelValues(service, projectName).Set(ts.TransportMaxIdleConnsPerHost)
+
+		// 上报时间戳
+		Metrics.TrafficSwitchingTimestamp.WithLabelValues(service, projectName).Set(ts.Timestamp)
+
+		// 更新心跳时间戳
+		UpdateTrafficSwitchingTimestamp(fmt.Sprintf("%s_%s", service, projectName))
 	}
 }
 

@@ -102,19 +102,22 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 			log.Printf("关闭请求体失败: %v", err)
 		}
 	}(r.Body)
+	//log.Printf("收到请求，数据长度: %d 字节", len(body))
+
 	// 解密数据
 	decryptedData, err := Decrypt(body)
 	if err != nil {
+		log.Printf("解密失败: %v", err)
 		writeJSONError(w, http.StatusBadRequest, "解密失败: "+err.Error())
 		return
 	}
-	//log.Printf("解密完成: %v", string(decryptedData))
 	// 解压数据
 	decompressedData, err := Decompress(decryptedData)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "解压失败: "+err.Error())
 		return
 	}
+	//log.Printf("解压完成: %v", string(decompressedData))
 
 	// 将解压后的 JSON 解析为 map
 	var payload map[string]interface{}
@@ -169,6 +172,8 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 			HandleHeartData(data, project)
 		case "k8sController":
 			HandleControllertResourceData(data, project)
+		case "trafficSwitching":
+			HandleTrafficSwitchingData(data, project)
 		default:
 			log.Printf("不支持的 source 类型: %s", source)
 		}

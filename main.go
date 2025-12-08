@@ -39,7 +39,7 @@ func loadConfig(configFile string) (*Config, error) {
 
 // 动态加载配置并监听变化
 func loadConfigWithViper() {
-	viper.SetConfigFile("config.yaml")
+	viper.SetConfigFile("config/config.yaml")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("配置文件读取失败: %v", err)
 	}
@@ -98,13 +98,19 @@ func startHeartbeatChecks() {
 			time.Sleep(5 * time.Second) // 每 5 秒检查一次
 		}
 	}()
+	go func() {
+		for {
+			Handers.CheckTrafficSwitchingHeartbeats()
+			time.Sleep(5 * time.Second) // 每 5 秒检查一次
+		}
+	}()
 }
 
 func main() {
 
 	//var wg sync.WaitGroup
 	// 加载配置文件
-	config, err := loadConfig("config.yaml")
+	config, err := loadConfig("config/config.yaml")
 	if err != nil {
 		log.Fatalf("加载配置失败: %v", err)
 	}
@@ -113,7 +119,7 @@ func main() {
 	Handers.SetEncryptionKey(config.Encrypted)
 
 	// 启动域名解析缓存的定时刷新功能
-	err = Handers.LoadProjectDict("projects.json")
+	err = Handers.LoadProjectDict("config/projects.json")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -140,7 +146,7 @@ func main() {
 	http.HandleFunc("/metrics_data", func(w http.ResponseWriter, r *http.Request) {
 		Handers.MetricsHandler(w, r, Metrics.CustomRegistry) // 传递 CustomRegistry
 	})
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8081", nil)
 	// 启动 HTTP 服务
 	log.Println("服务启动，监听端口 8080...")
 
