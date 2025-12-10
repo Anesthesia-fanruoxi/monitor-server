@@ -51,6 +51,16 @@ func CheckTrafficSwitchingHeartbeats() {
 				Metrics.TrafficSwitchingTotalErrors.DeleteLabelValues(service, project)
 				Metrics.TrafficSwitchingTotalSuccessRate.DeleteLabelValues(service, project)
 
+				// 今日统计
+				Metrics.TrafficSwitchingTodayRequests.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingTodaySuccess.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingTodayErrors.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingTodayCanceled.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingTodayStatus2xx.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingTodayStatus3xx.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingTodayStatus4xx.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingTodayStatus5xx.DeleteLabelValues(service, project)
+
 				// 实时统计
 				Metrics.TrafficSwitchingRealtimeQPS.DeleteLabelValues(service, project)
 				Metrics.TrafficSwitchingRealtimeSuccessQPS.DeleteLabelValues(service, project)
@@ -58,6 +68,15 @@ func CheckTrafficSwitchingHeartbeats() {
 				Metrics.TrafficSwitchingRealtimeActiveConnections.DeleteLabelValues(service, project)
 				Metrics.TrafficSwitchingRealtimeAvgLatencyMs.DeleteLabelValues(service, project)
 				Metrics.TrafficSwitchingRealtimeMaxLatencyMs.DeleteLabelValues(service, project)
+
+				// 错误类型
+				Metrics.TrafficSwitchingErrorBackendError.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingErrorBrokenPipe.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingErrorConnectionRefused.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingErrorConnectionReset.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingErrorDNSError.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingErrorEOF.DeleteLabelValues(service, project)
+				Metrics.TrafficSwitchingErrorTimeout.DeleteLabelValues(service, project)
 
 				// 缓存
 				Metrics.TrafficSwitchingProxyCacheSize.DeleteLabelValues(service, project)

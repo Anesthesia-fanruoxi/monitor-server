@@ -39,6 +39,71 @@ var (
 		trafficSwitchingLabels,
 	)
 
+	// 今日统计
+	TrafficSwitchingTodayRequests = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_today_requests",
+			Help: "今日请求数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingTodaySuccess = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_today_success",
+			Help: "今日成功数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingTodayErrors = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_today_errors",
+			Help: "今日错误数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingTodayCanceled = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_today_canceled",
+			Help: "今日取消数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingTodayStatus2xx = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_today_status_2xx",
+			Help: "今日 2xx 状态码数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingTodayStatus3xx = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_today_status_3xx",
+			Help: "今日 3xx 状态码数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingTodayStatus4xx = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_today_status_4xx",
+			Help: "今日 4xx 状态码数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingTodayStatus5xx = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_today_status_5xx",
+			Help: "今日 5xx 状态码数",
+		},
+		trafficSwitchingLabels,
+	)
+
 	// 实时统计
 	TrafficSwitchingRealtimeQPS = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -84,6 +149,63 @@ var (
 		prometheus.GaugeOpts{
 			Name: "trafficswitching_realtime_max_latency_ms",
 			Help: "实时最大延迟（毫秒）",
+		},
+		trafficSwitchingLabels,
+	)
+
+	// 错误类型统计
+	TrafficSwitchingErrorBackendError = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_error_backend_error",
+			Help: "后端错误数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingErrorBrokenPipe = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_error_broken_pipe",
+			Help: "管道断开错误数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingErrorConnectionRefused = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_error_connection_refused",
+			Help: "连接拒绝错误数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingErrorConnectionReset = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_error_connection_reset",
+			Help: "连接重置错误数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingErrorDNSError = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_error_dns_error",
+			Help: "DNS 解析错误数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingErrorEOF = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_error_eof",
+			Help: "EOF 错误数",
+		},
+		trafficSwitchingLabels,
+	)
+
+	TrafficSwitchingErrorTimeout = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "trafficswitching_error_timeout",
+			Help: "超时错误数",
 		},
 		trafficSwitchingLabels,
 	)

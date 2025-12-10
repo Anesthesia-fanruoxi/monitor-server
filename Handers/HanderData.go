@@ -253,6 +253,16 @@ func HandleTrafficSwitchingData(data []interface{}, project string) {
 		Metrics.TrafficSwitchingTotalErrors.WithLabelValues(service, projectName).Set(ts.TotalErrors)
 		Metrics.TrafficSwitchingTotalSuccessRate.WithLabelValues(service, projectName).Set(successRate)
 
+		// 今日统计
+		Metrics.TrafficSwitchingTodayRequests.WithLabelValues(service, projectName).Set(ts.TodayRequests)
+		Metrics.TrafficSwitchingTodaySuccess.WithLabelValues(service, projectName).Set(ts.TodaySuccess)
+		Metrics.TrafficSwitchingTodayErrors.WithLabelValues(service, projectName).Set(ts.TodayErrors)
+		Metrics.TrafficSwitchingTodayCanceled.WithLabelValues(service, projectName).Set(ts.TodayCanceled)
+		Metrics.TrafficSwitchingTodayStatus2xx.WithLabelValues(service, projectName).Set(ts.TodayStatus2xx)
+		Metrics.TrafficSwitchingTodayStatus3xx.WithLabelValues(service, projectName).Set(ts.TodayStatus3xx)
+		Metrics.TrafficSwitchingTodayStatus4xx.WithLabelValues(service, projectName).Set(ts.TodayStatus4xx)
+		Metrics.TrafficSwitchingTodayStatus5xx.WithLabelValues(service, projectName).Set(ts.TodayStatus5xx)
+
 		// 实时统计
 		Metrics.TrafficSwitchingRealtimeQPS.WithLabelValues(service, projectName).Set(ts.RealtimeQPS)
 		Metrics.TrafficSwitchingRealtimeSuccessQPS.WithLabelValues(service, projectName).Set(ts.RealtimeSuccessQPS)
@@ -260,6 +270,15 @@ func HandleTrafficSwitchingData(data []interface{}, project string) {
 		Metrics.TrafficSwitchingRealtimeActiveConnections.WithLabelValues(service, projectName).Set(ts.RealtimeActiveConnections)
 		Metrics.TrafficSwitchingRealtimeAvgLatencyMs.WithLabelValues(service, projectName).Set(ts.RealtimeAvgLatencyMs)
 		Metrics.TrafficSwitchingRealtimeMaxLatencyMs.WithLabelValues(service, projectName).Set(ts.RealtimeMaxLatencyMs)
+
+		// 错误类型
+		Metrics.TrafficSwitchingErrorBackendError.WithLabelValues(service, projectName).Set(ts.ErrorBackendError)
+		Metrics.TrafficSwitchingErrorBrokenPipe.WithLabelValues(service, projectName).Set(ts.ErrorBrokenPipe)
+		Metrics.TrafficSwitchingErrorConnectionRefused.WithLabelValues(service, projectName).Set(ts.ErrorConnectionRefused)
+		Metrics.TrafficSwitchingErrorConnectionReset.WithLabelValues(service, projectName).Set(ts.ErrorConnectionReset)
+		Metrics.TrafficSwitchingErrorDNSError.WithLabelValues(service, projectName).Set(ts.ErrorDNSError)
+		Metrics.TrafficSwitchingErrorEOF.WithLabelValues(service, projectName).Set(ts.ErrorEOF)
+		Metrics.TrafficSwitchingErrorTimeout.WithLabelValues(service, projectName).Set(ts.ErrorTimeout)
 
 		// 代理缓存
 		Metrics.TrafficSwitchingProxyCacheSize.WithLabelValues(service, projectName).Set(ts.ProxyCacheSize)

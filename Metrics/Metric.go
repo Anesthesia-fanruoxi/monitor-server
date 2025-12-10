@@ -57,6 +57,15 @@ func init() {
 	CustomRegistry.MustRegister(TrafficSwitchingTotalSuccess)
 	CustomRegistry.MustRegister(TrafficSwitchingTotalErrors)
 	CustomRegistry.MustRegister(TrafficSwitchingTotalSuccessRate)
+	// 今日统计
+	CustomRegistry.MustRegister(TrafficSwitchingTodayRequests)
+	CustomRegistry.MustRegister(TrafficSwitchingTodaySuccess)
+	CustomRegistry.MustRegister(TrafficSwitchingTodayErrors)
+	CustomRegistry.MustRegister(TrafficSwitchingTodayCanceled)
+	CustomRegistry.MustRegister(TrafficSwitchingTodayStatus2xx)
+	CustomRegistry.MustRegister(TrafficSwitchingTodayStatus3xx)
+	CustomRegistry.MustRegister(TrafficSwitchingTodayStatus4xx)
+	CustomRegistry.MustRegister(TrafficSwitchingTodayStatus5xx)
 	// 实时统计
 	CustomRegistry.MustRegister(TrafficSwitchingRealtimeQPS)
 	CustomRegistry.MustRegister(TrafficSwitchingRealtimeSuccessQPS)
@@ -64,6 +73,14 @@ func init() {
 	CustomRegistry.MustRegister(TrafficSwitchingRealtimeActiveConnections)
 	CustomRegistry.MustRegister(TrafficSwitchingRealtimeAvgLatencyMs)
 	CustomRegistry.MustRegister(TrafficSwitchingRealtimeMaxLatencyMs)
+	// 错误类型
+	CustomRegistry.MustRegister(TrafficSwitchingErrorBackendError)
+	CustomRegistry.MustRegister(TrafficSwitchingErrorBrokenPipe)
+	CustomRegistry.MustRegister(TrafficSwitchingErrorConnectionRefused)
+	CustomRegistry.MustRegister(TrafficSwitchingErrorConnectionReset)
+	CustomRegistry.MustRegister(TrafficSwitchingErrorDNSError)
+	CustomRegistry.MustRegister(TrafficSwitchingErrorEOF)
+	CustomRegistry.MustRegister(TrafficSwitchingErrorTimeout)
 	// 缓存
 	CustomRegistry.MustRegister(TrafficSwitchingProxyCacheSize)
 	CustomRegistry.MustRegister(TrafficSwitchingProxyMaxCacheSize)

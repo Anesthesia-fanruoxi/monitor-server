@@ -106,11 +106,21 @@ type EsUrlSource struct {
 type TrafficSwitchingSource struct {
 	Service string `json:"service"` // 服务名称
 
-	// 累计请求统计
+	// 累计统计（持续增长）
 	TotalRequests    float64     `json:"total_requests"`
 	TotalSuccess     float64     `json:"total_success"`
 	TotalErrors      float64     `json:"total_errors"`
-	TotalSuccessRate interface{} `json:"total_success_rate"` // 兼容字符串或数字
+	TotalSuccessRate interface{} `json:"total_success_rate"`
+
+	// 今日统计（每天凌晨重置）
+	TodayRequests  float64 `json:"today_requests"`
+	TodaySuccess   float64 `json:"today_success"`
+	TodayErrors    float64 `json:"today_errors"`
+	TodayCanceled  float64 `json:"today_canceled"`
+	TodayStatus2xx float64 `json:"today_status_2xx"`
+	TodayStatus3xx float64 `json:"today_status_3xx"`
+	TodayStatus4xx float64 `json:"today_status_4xx"`
+	TodayStatus5xx float64 `json:"today_status_5xx"`
 
 	// 实时统计
 	RealtimeQPS               float64 `json:"realtime_qps"`
@@ -119,6 +129,15 @@ type TrafficSwitchingSource struct {
 	RealtimeActiveConnections float64 `json:"realtime_active_connections"`
 	RealtimeAvgLatencyMs      float64 `json:"realtime_avg_latency_ms"`
 	RealtimeMaxLatencyMs      float64 `json:"realtime_max_latency_ms"`
+
+	// 错误类型统计
+	ErrorBackendError      float64 `json:"error_backend_error"`
+	ErrorBrokenPipe        float64 `json:"error_broken_pipe"`
+	ErrorConnectionRefused float64 `json:"error_connection_refused"`
+	ErrorConnectionReset   float64 `json:"error_connection_reset"`
+	ErrorDNSError          float64 `json:"error_dns_error"`
+	ErrorEOF               float64 `json:"error_eof"`
+	ErrorTimeout           float64 `json:"error_timeout"`
 
 	// 代理缓存
 	ProxyCacheSize    float64 `json:"proxy_cache_size"`

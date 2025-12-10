@@ -146,7 +146,7 @@ func main() {
 	http.HandleFunc("/metrics_data", func(w http.ResponseWriter, r *http.Request) {
 		Handers.MetricsHandler(w, r, Metrics.CustomRegistry) // 传递 CustomRegistry
 	})
-	http.ListenAndServe(":8081", nil)
+	http.ListenAndServe(":8080", nil)
 	// 启动 HTTP 服务
 	log.Println("服务启动，监听端口 8080...")
 
