@@ -3,7 +3,6 @@ package Handers
 import (
 	"log"
 	"monitor-server/Metrics"
-	"strings"
 	"sync"
 	"time"
 )
@@ -13,13 +12,11 @@ var ContainerTimestamp sync.Map
 
 // 反解析 label 字符串并更新数据
 func parseContainerLabel(metricLabel string) (string, string, string, string, string) {
-	// 以 "_" 为分隔符分割 label 字符串
-	parts := strings.Split(metricLabel, "_")
+	parts := SplitLabels(metricLabel)
 	if len(parts) < 5 {
 		log.Printf("标签 %s 无法解析，格式不正确", metricLabel)
 		return "", "", "", "", ""
 	}
-	// 重新解析并返回各个字段的值
 	return parts[0], parts[1], parts[2], parts[3], parts[4]
 }
 

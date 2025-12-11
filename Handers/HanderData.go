@@ -10,10 +10,25 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 var projectNameDict map[string]string
+var projectNameDictMu sync.RWMutex
+
+// LabelSeparator 标签分隔符，使用不常见的字符串避免与字段值冲突
+const LabelSeparator = "|:|"
+
+// JoinLabels 连接多个标签值
+func JoinLabels(parts ...string) string {
+	return strings.Join(parts, LabelSeparator)
+}
+
+// SplitLabels 分割标签字符串
+func SplitLabels(label string) []string {
+	return strings.Split(label, LabelSeparator)
+}
 
 // 处理 namespace，去掉 -v1 或 -v2
 func cleanNamespace(namespace string) string {
@@ -25,7 +40,7 @@ func cleanNamespace(namespace string) string {
 	return namespace
 }
 
-// 读取配置文件的函数
+// 读取配置文件的函数（线程安全）
 func LoadProjectDict(configPath string) error {
 	// 打开配置文件
 	file, err := os.Open(configPath)
@@ -33,9 +48,8 @@ func LoadProjectDict(configPath string) error {
 		return fmt.Errorf("无法打开配置文件: %v", err)
 	}
 	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-
+		if err := file.Close(); err != nil {
+			log.Printf("关闭配置文件失败: %v", err)
 		}
 	}(file)
 
@@ -45,22 +59,33 @@ func LoadProjectDict(configPath string) error {
 		return fmt.Errorf("无法读取配置文件内容: %v", err)
 	}
 
-	// 解析 JSON 数据到字典
-	err = json.Unmarshal(content, &projectNameDict)
-	if err != nil {
+	// 解析 JSON 数据到临时变量
+	var tempDict map[string]string
+	if err = json.Unmarshal(content, &tempDict); err != nil {
 		return fmt.Errorf("解析配置文件失败: %v", err)
 	}
+
+	// 加锁后赋值
+	projectNameDictMu.Lock()
+	projectNameDict = tempDict
+	projectNameDictMu.Unlock()
 
 	return nil
 }
 
+// 获取项目名称（线程安全）
+func getProjectName(project string) string {
+	projectNameDictMu.RLock()
+	defer projectNameDictMu.RUnlock()
+	if name, ok := projectNameDict[project]; ok && name != "" {
+		return name
+	}
+	return project
+}
+
 // 处理 nginx 类型的数据
 func HandleNginxData(data []interface{}, project string) {
-	projectName := projectNameDict[project]
-	if projectName == "" {
-		// 如果字典中没有找到对应的中文名称，使用原值
-		projectName = project
-	}
+	projectName := getProjectName(project)
 	for _, item := range data {
 		itemBytes, err := json.Marshal(item)
 		if err != nil {
@@ -88,17 +113,13 @@ func HandleNginxData(data []interface{}, project string) {
 		Metrics.NginxTcpClosedMetric.WithLabelValues(nginxData.HostName, projectName).Set(float64(nginxData.TcpClosed))
 		Metrics.NginxTcpOrphanedMetric.WithLabelValues(nginxData.HostName, projectName).Set(float64(nginxData.TcpOrphaned))
 		Metrics.NginxTcpTimewaitMetric.WithLabelValues(nginxData.HostName, projectName).Set(float64(nginxData.TcpTimewait))
-		UpdateNginxMetricWithTimestamp(fmt.Sprintf("%s_%s", nginxData.HostName, projectName))
+		UpdateNginxMetricWithTimestamp(JoinLabels(nginxData.HostName, projectName))
 	}
 }
 
 // 处理硬件相关的数据
 func HandleHardData(data []interface{}, project string) {
-	projectName := projectNameDict[project]
-	if projectName == "" {
-		// 如果字典中没有找到对应的中文名称，使用原值
-		projectName = project
-	}
+	projectName := getProjectName(project)
 	for _, item := range data {
 		itemBytes, err := json.Marshal(item)
 		if err != nil {
@@ -110,13 +131,6 @@ func HandleHardData(data []interface{}, project string) {
 		if err := json.Unmarshal(itemBytes, &hardData); err != nil {
 			log.Printf("解析硬件数据失败: %v", err)
 			continue
-		}
-		// 将 `hardData` 转换为 JSON
-		jsonData, err := json.Marshal(hardData)
-		if err != nil {
-			log.Printf("将硬件数据转换为 JSON 失败: %v", err)
-		} else {
-			log.Println(string(jsonData)) // 打印 JSON 格式的数据
 		}
 		// 更新硬件相关指标
 		Metrics.CpuPercentMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPUPercent)
@@ -133,18 +147,14 @@ func HandleHardData(data []interface{}, project string) {
 		Metrics.CpuLoad15Metric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPULoad15)
 		Metrics.CpuTotalMetric.WithLabelValues(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion).Set(hardData.CPUCount)
 
-		UpdateHardMetricWithTimestamp(fmt.Sprintf("%s_%s_%s_%s", hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion))
+		UpdateHardMetricWithTimestamp(JoinLabels(hardData.HostName, projectName, hardData.CPUModel, hardData.OSVersion, hardData.KernelVersion))
 
 	}
 }
 
 // 处理SSl证书数据
 func HandleSSLData(data []interface{}, project string) {
-	projectName := projectNameDict[project]
-	if projectName == "" {
-		// 如果字典中没有找到对应的中文名称，使用原值
-		projectName = project
-	}
+	projectName := getProjectName(project)
 	for _, item := range data {
 		itemBytes, err := json.Marshal(item)
 		if err != nil {
@@ -169,7 +179,7 @@ func HandleSSLData(data []interface{}, project string) {
 		}
 
 		// 更新 SSL 指标并打印日志，添加 project 标签
-		metricLabel := fmt.Sprintf("%s_%s_%s_%s_%s", sslData.Domain, sslData.Comment, sslData.Status, resolve, projectName)
+		metricLabel := JoinLabels(sslData.Domain, sslData.Comment, sslData.Status, resolve, projectName)
 		Metrics.SslDaysLeftMetric.WithLabelValues(sslData.Domain, sslData.Comment, sslData.Status, resolve, projectName).Set(float64(sslData.DaysLeft))
 
 		// 存储时间戳
@@ -180,12 +190,7 @@ func HandleSSLData(data []interface{}, project string) {
 
 // 处理容器资源数据
 func HandleContainerResourceData(data []interface{}, project string) {
-	// 将项目名称映射为中文名称（假设有一个字典）
-	projectName := projectNameDict[project]
-	if projectName == "" {
-		// 如果字典中没有找到对应的中文名称，使用原值
-		projectName = project
-	}
+	projectName := getProjectName(project)
 
 	for _, item := range data {
 		// 将每个资源项转化为 JSON 字节
@@ -210,14 +215,11 @@ func HandleContainerResourceData(data []interface{}, project string) {
 		Metrics.ContainerRestartCountMetric.WithLabelValues(containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName).Set(float64(containerResource.RestartCount))
 		Metrics.ContainerLastTerminationTimeMetric.WithLabelValues(containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName).Set(float64(containerResource.LastTerminationTime))
 
-		UpdateContainerMetricWithTimestamp(fmt.Sprintf("%s_%s_%s_%s_%s", containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName))
+		UpdateContainerMetricWithTimestamp(JoinLabels(containerNamespace, containerResource.PodName, containerResource.Container, containerResource.ControllerName, projectName))
 	}
 }
 func HandleTrafficSwitchingData(data []interface{}, project string) {
-	projectName := projectNameDict[project]
-	if projectName == "" {
-		projectName = project
-	}
+	projectName := getProjectName(project)
 
 	for _, item := range data {
 		itemBytes, err := json.Marshal(item)
@@ -300,93 +302,59 @@ func HandleTrafficSwitchingData(data []interface{}, project string) {
 		Metrics.TrafficSwitchingTimestamp.WithLabelValues(service, projectName).Set(ts.Timestamp)
 
 		// 更新心跳时间戳
-		UpdateTrafficSwitchingTimestamp(fmt.Sprintf("%s_%s", service, projectName))
+		UpdateTrafficSwitchingTimestamp(JoinLabels(service, projectName))
 	}
 }
 
 // 更新心跳数据
 func HandleHeartData(data []interface{}, project string) {
-	projectName := projectNameDict[project]
-	if projectName == "" {
-		// 如果字典中没有找到对应的中文名称，使用原值
-		projectName = project
-	}
+	projectName := getProjectName(project)
 	for _, item := range data {
 		itemBytes, err := json.Marshal(item)
 		if err != nil {
-			log.Printf("无法序列化 hard data 中的元素: %v", item)
+			log.Printf("无法序列化 heart data 中的元素: %v", item)
 			continue
 		}
 
-		var hardData Modles.HardSource
-		if err := json.Unmarshal(itemBytes, &hardData); err != nil {
-			log.Printf("解析硬件数据失败: %v", err)
+		var heartData Modles.HeartSource
+		if err := json.Unmarshal(itemBytes, &heartData); err != nil {
+			log.Printf("解析心跳数据失败: %v", err)
 			continue
 		}
-		for _, item := range data {
-			itemBytes, err := json.Marshal(item)
-			if err != nil {
-				log.Printf("无法序列化 ssl data 中的元素: %v", item)
-				continue
-			}
 
-			var heartData Modles.HeartSource
-			if err := json.Unmarshal(itemBytes, &heartData); err != nil {
-				log.Printf("解析 SSL 数据失败: %v", err)
-				continue
-			}
+		// 更新心跳指标
+		Metrics.IsActiveMetric.WithLabelValues(heartData.Hostname, projectName).Set(float64(heartData.IsActive))
+		Metrics.AgentVerisonMetric.WithLabelValues(heartData.Hostname, projectName).Set(float64(heartData.Version))
 
-			// 记录时间戳
-			// 更新 心跳 指标
-			Metrics.IsActiveMetric.WithLabelValues(heartData.Hostname, projectName).Set(float64(heartData.IsActive))
-			Metrics.AgentVerisonMetric.WithLabelValues(heartData.Hostname, projectName).Set(float64(heartData.Version))
-			metricLabel := fmt.Sprintf("%s_%s", hardData.HostName, projectName)
-
-			agentHeartbeatTimes.Store(metricLabel, time.Now())
-		}
+		// 记录时间戳
+		metricLabel := JoinLabels(heartData.Hostname, projectName)
+		agentHeartbeatTimes.Store(metricLabel, time.Now())
 	}
 }
 
 // 更新控制器数据
 func HandleControllertResourceData(data []interface{}, project string) {
-	projectName := projectNameDict[project]
-	if projectName == "" {
-		// 如果字典中没有找到对应的中文名称，使用原值
-		projectName = project
-	}
+	projectName := getProjectName(project)
 	for _, item := range data {
 		itemBytes, err := json.Marshal(item)
 		if err != nil {
-			log.Printf("无法序列化 hard data 中的元素: %v", item)
+			log.Printf("无法序列化 controller data 中的元素: %v", item)
 			continue
 		}
 
 		var controllerData Modles.ControllerResource
 		if err := json.Unmarshal(itemBytes, &controllerData); err != nil {
-			log.Printf("解析硬件数据失败: %v", err)
+			log.Printf("解析控制器数据失败: %v", err)
 			continue
 		}
-		for _, item := range data {
-			itemBytes, err := json.Marshal(item)
-			if err != nil {
-				log.Printf("无法序列化 ssl data 中的元素: %v", item)
-				continue
-			}
 
-			var controllerData Modles.ControllerResource
-			if err := json.Unmarshal(itemBytes, &controllerData); err != nil {
-				log.Printf("解析 SSL 数据失败: %v", err)
-				continue
-			}
+		containerNamespace := cleanNamespace(controllerData.Namespace)
 
-			containerNamespace := cleanNamespace(controllerData.Namespace)
-			// 更新 心跳 指标
-			Metrics.ControllerReplicasMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.Replicas))
-			Metrics.ControllerReplicasAvailableMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.ReplicasAvailable))
-			Metrics.ControllerReplicasUnavailableMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.ReplicasUnavailable))
+		// 更新控制器指标
+		Metrics.ControllerReplicasMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.Replicas))
+		Metrics.ControllerReplicasAvailableMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.ReplicasAvailable))
+		Metrics.ControllerReplicasUnavailableMetric.WithLabelValues(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName).Set(float64(controllerData.ReplicasUnavailable))
 
-			UpdateControllerMetricWithTimestamp(fmt.Sprintf("%s_%s_%s_%s", containerNamespace, controllerData.Container, controllerData.ControllerType, projectName))
-
-		}
+		UpdateControllerMetricWithTimestamp(JoinLabels(containerNamespace, controllerData.Container, controllerData.ControllerType, projectName))
 	}
 }

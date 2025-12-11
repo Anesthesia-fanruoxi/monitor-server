@@ -3,17 +3,16 @@ package Handers
 import (
 	"log"
 	"monitor-server/Metrics"
-	"strings"
 	"sync"
 	"time"
 )
 
-// TrafficSwitchingTimestamp 用来存储各实例的时间戳，key 格式: service_project
+// TrafficSwitchingTimestamp 用来存储各实例的时间戳，key 格式: service|:|project
 var TrafficSwitchingTimestamp = sync.Map{}
 
 // parseTrafficSwitchingLabel 反解析 label 字符串，返回 service 和 project
 func parseTrafficSwitchingLabel(metricLabel string) (string, string) {
-	parts := strings.Split(metricLabel, "_")
+	parts := SplitLabels(metricLabel)
 	if len(parts) < 2 {
 		log.Printf("[TrafficSwitching] 标签 %s 无法解析，格式不正确", metricLabel)
 		return "", ""

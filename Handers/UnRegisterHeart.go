@@ -3,7 +3,6 @@ package Handers
 import (
 	"log"
 	"monitor-server/Metrics"
-	"strings"
 	"sync"
 	"time"
 )
@@ -12,7 +11,7 @@ var agentHeartbeatTimes = sync.Map{}
 
 // 反解析 label 字符串并获取 hostname 和 project
 func parseHeartbeatLabel(metricLabel string) (string, string) {
-	parts := strings.Split(metricLabel, "_")
+	parts := SplitLabels(metricLabel)
 	if len(parts) < 2 {
 		log.Printf("标签 %s 无法解析，格式不正确", metricLabel)
 		return "", ""
