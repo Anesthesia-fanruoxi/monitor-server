@@ -41,7 +41,7 @@ func CheckHeartbeats() {
 		hostname, project := parseHeartbeatLabel(metricLabel)
 
 		// 如果超过 10 秒没有接收到心跳
-		if currentTime.Sub(timestamp) > 10*time.Second {
+		if currentTime.Sub(timestamp) > 20*time.Second {
 			// 设置 IsActive 为 0，表示该 agent 已经不活跃
 			Metrics.IsActiveMetric.WithLabelValues(hostname, project).Set(0)
 		}

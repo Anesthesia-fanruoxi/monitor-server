@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 var projectNameDict map[string]string
@@ -87,14 +89,8 @@ func getProjectName(project string) string {
 func HandleNginxData(data []interface{}, project string) {
 	projectName := getProjectName(project)
 	for _, item := range data {
-		itemBytes, err := json.Marshal(item)
-		if err != nil {
-			log.Printf("无法序列化 nginx data 中的元素: %v", item)
-			continue
-		}
-
 		var nginxData Modles.NginxSource
-		if err := json.Unmarshal(itemBytes, &nginxData); err != nil {
+		if err := mapstructure.Decode(item, &nginxData); err != nil {
 			log.Printf("解析 Nginx 数据失败: %v", err)
 			continue
 		}
@@ -121,14 +117,8 @@ func HandleNginxData(data []interface{}, project string) {
 func HandleHardData(data []interface{}, project string) {
 	projectName := getProjectName(project)
 	for _, item := range data {
-		itemBytes, err := json.Marshal(item)
-		if err != nil {
-			log.Printf("无法序列化 hard data 中的元素: %v", item)
-			continue
-		}
-
 		var hardData Modles.HardSource
-		if err := json.Unmarshal(itemBytes, &hardData); err != nil {
+		if err := mapstructure.Decode(item, &hardData); err != nil {
 			log.Printf("解析硬件数据失败: %v", err)
 			continue
 		}
@@ -156,14 +146,8 @@ func HandleHardData(data []interface{}, project string) {
 func HandleSSLData(data []interface{}, project string) {
 	projectName := getProjectName(project)
 	for _, item := range data {
-		itemBytes, err := json.Marshal(item)
-		if err != nil {
-			log.Printf("无法序列化 ssl data 中的元素: %v", item)
-			continue
-		}
-
 		var sslData Modles.SslSource
-		if err := json.Unmarshal(itemBytes, &sslData); err != nil {
+		if err := mapstructure.Decode(item, &sslData); err != nil {
 			log.Printf("解析 SSL 数据失败: %v", err)
 			continue
 		}
@@ -193,16 +177,8 @@ func HandleContainerResourceData(data []interface{}, project string) {
 	projectName := getProjectName(project)
 
 	for _, item := range data {
-		// 将每个资源项转化为 JSON 字节
-		itemBytes, err := json.Marshal(item)
-		if err != nil {
-			log.Printf("无法序列化容器资源数据中的元素: %v", item)
-			continue
-		}
-
-		// 将字节数据反序列化为 ContainerResource 类型
 		var containerResource Modles.ContainerResource
-		if err := json.Unmarshal(itemBytes, &containerResource); err != nil {
+		if err := mapstructure.Decode(item, &containerResource); err != nil {
 			log.Printf("解析容器资源数据失败: %v", err)
 			continue
 		}
@@ -222,21 +198,15 @@ func HandleTrafficSwitchingData(data []interface{}, project string) {
 	projectName := getProjectName(project)
 
 	for _, item := range data {
-		itemBytes, err := json.Marshal(item)
-		if err != nil {
-			log.Printf("无法序列化 traffic switching data 中的元素: %v", item)
-			continue
-		}
-
 		var ts Modles.TrafficSwitchingSource
-		if err := json.Unmarshal(itemBytes, &ts); err != nil {
+		if err := mapstructure.Decode(item, &ts); err != nil {
 			log.Printf("解析 traffic switching 数据失败: %v", err)
 			continue
 		}
 
 		service := ts.Service
 
-		// 解析 success_rate（兼容字符串和数字）
+		// 解析 success_rate（兼容字符串、数字和nil）
 		var successRate float64
 		switch v := ts.TotalSuccessRate.(type) {
 		case float64:
@@ -246,7 +216,12 @@ func HandleTrafficSwitchingData(data []interface{}, project string) {
 			s := strings.TrimSuffix(v, "%")
 			if parsed, err := strconv.ParseFloat(s, 64); err == nil {
 				successRate = parsed / 100.0
+			} else {
+				log.Printf("解析 success_rate 失败: %v, 原始值: %s", err, v)
 			}
+		case nil:
+			// nil 时默认为 0，不打印日志
+			successRate = 0
 		}
 
 		// 累计统计
@@ -310,14 +285,8 @@ func HandleTrafficSwitchingData(data []interface{}, project string) {
 func HandleHeartData(data []interface{}, project string) {
 	projectName := getProjectName(project)
 	for _, item := range data {
-		itemBytes, err := json.Marshal(item)
-		if err != nil {
-			log.Printf("无法序列化 heart data 中的元素: %v", item)
-			continue
-		}
-
 		var heartData Modles.HeartSource
-		if err := json.Unmarshal(itemBytes, &heartData); err != nil {
+		if err := mapstructure.Decode(item, &heartData); err != nil {
 			log.Printf("解析心跳数据失败: %v", err)
 			continue
 		}
@@ -336,14 +305,8 @@ func HandleHeartData(data []interface{}, project string) {
 func HandleControllertResourceData(data []interface{}, project string) {
 	projectName := getProjectName(project)
 	for _, item := range data {
-		itemBytes, err := json.Marshal(item)
-		if err != nil {
-			log.Printf("无法序列化 controller data 中的元素: %v", item)
-			continue
-		}
-
 		var controllerData Modles.ControllerResource
-		if err := json.Unmarshal(itemBytes, &controllerData); err != nil {
+		if err := mapstructure.Decode(item, &controllerData); err != nil {
 			log.Printf("解析控制器数据失败: %v", err)
 			continue
 		}

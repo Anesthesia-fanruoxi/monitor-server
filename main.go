@@ -28,9 +28,8 @@ func loadConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("打开配置文件失败: %v", err)
 	}
 	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-
+		if err := file.Close(); err != nil {
+			log.Printf("关闭配置文件失败: %v", err)
 		}
 	}(file)
 

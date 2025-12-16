@@ -38,7 +38,7 @@ func CheckControllerHeartbeats() {
 			log.Printf("时间戳格式不正确，跳过")
 			return true
 		}
-		if currentTime.Sub(timestamp) > 10*time.Second {
+		if currentTime.Sub(timestamp) > 20*time.Second {
 			// 反解析 metricLabel 获取各个标签的值
 			namespace, continer, ControllerType, project := parseControllerLabel(metricLabel)
 

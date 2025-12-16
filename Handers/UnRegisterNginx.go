@@ -39,7 +39,7 @@ func CheckNginxHeartbeats() {
 			return true
 		}
 		// 如果超过 10 秒没有更新
-		if currentTime.Sub(timestamp) > 10*time.Second {
+		if currentTime.Sub(timestamp) > 20*time.Second {
 			// 反解析 metricLabel 获取各个标签的值
 			hostName, project := parseNginxLabel(metricLabel)
 

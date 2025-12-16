@@ -18,16 +18,60 @@ import (
 var encryptionKey []byte
 var encryptionKeyMu sync.RWMutex // 使用读写锁，允许并发读取
 
-// 细粒度锁：每种 source 类型使用独立的锁，允许不同类型数据并发处理
+// 分片锁：按 source+project 组合分锁，大幅提升并发能力
+const shardCount = 256 // 分片数量，2的幂次方便取模
+
+type shardedMutex struct {
+	shards [shardCount]sync.Mutex
+}
+
+func (sm *shardedMutex) getShard(key string) *sync.Mutex {
+	// FNV-1a 哈希算法，快速且分布均匀
+	hash := uint32(2166136261)
+	for i := 0; i < len(key); i++ {
+		hash ^= uint32(key[i])
+		hash *= 16777619
+	}
+	return &sm.shards[hash%shardCount]
+}
+
 var (
-	nginxMu            sync.Mutex
-	hardMu             sync.Mutex
-	sslMu              sync.Mutex
-	containerMu        sync.Mutex
-	heartMu            sync.Mutex
-	controllerMu       sync.Mutex
-	trafficSwitchingMu sync.Mutex
+	nginxShards            shardedMutex
+	hardShards             shardedMutex
+	sslShards              shardedMutex
+	containerShards        shardedMutex
+	heartShards            shardedMutex
+	controllerShards       shardedMutex
+	trafficSwitchingShards shardedMutex
 )
+
+// Worker Pool 配置
+const workerPoolSize = 500  // 并发 worker 数量
+const taskQueueSize = 10000 // 任务队列缓冲大小
+
+var taskQueue chan func()
+
+func init() {
+	taskQueue = make(chan func(), taskQueueSize)
+	// 启动 worker pool
+	for i := 0; i < workerPoolSize; i++ {
+		go func() {
+			for task := range taskQueue {
+				safeExecute(task)
+			}
+		}()
+	}
+}
+
+// safeExecute 安全执行任务，捕获 panic 防止 worker 退出
+func safeExecute(task func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Worker panic 恢复: %v", r)
+		}
+	}()
+	task()
+}
 
 // 允许的 source 类型白名单
 var allowedSources = map[string]bool{
@@ -226,39 +270,53 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request, CustomRegistry *prom
 		log.Printf("响应失败: %v", err)
 	}
 
-	// 在后台异步处理数据，使用细粒度锁提高并发性能
-	go func() {
-		// 根据 source 类型使用对应的锁，允许不同类型数据并发处理
+	// 使用 worker pool 处理，按 project 分片锁，同项目同类型串行，不同项目并发
+	task := func() {
 		switch source {
 		case "nginx":
-			nginxMu.Lock()
+			mu := nginxShards.getShard(project)
+			mu.Lock()
 			HandleNginxData(data, project)
-			nginxMu.Unlock()
+			mu.Unlock()
 		case "hard":
-			hardMu.Lock()
+			mu := hardShards.getShard(project)
+			mu.Lock()
 			HandleHardData(data, project)
-			hardMu.Unlock()
+			mu.Unlock()
 		case "ssl":
-			sslMu.Lock()
+			mu := sslShards.getShard(project)
+			mu.Lock()
 			HandleSSLData(data, project)
-			sslMu.Unlock()
+			mu.Unlock()
 		case "k8s":
-			containerMu.Lock()
+			mu := containerShards.getShard(project)
+			mu.Lock()
 			HandleContainerResourceData(data, project)
-			containerMu.Unlock()
+			mu.Unlock()
 		case "heart":
-			heartMu.Lock()
+			mu := heartShards.getShard(project)
+			mu.Lock()
 			HandleHeartData(data, project)
-			heartMu.Unlock()
+			mu.Unlock()
 		case "k8sController":
-			controllerMu.Lock()
+			mu := controllerShards.getShard(project)
+			mu.Lock()
 			HandleControllertResourceData(data, project)
-			controllerMu.Unlock()
+			mu.Unlock()
 		case "trafficSwitching":
-			trafficSwitchingMu.Lock()
+			mu := trafficSwitchingShards.getShard(project)
+			mu.Lock()
 			HandleTrafficSwitchingData(data, project)
-			trafficSwitchingMu.Unlock()
+			mu.Unlock()
 		}
-		// 注意：source 已经在前面验证过，不需要 default 分支
-	}()
+	}
+
+	// 非阻塞提交任务，队列满时降级为同步处理
+	select {
+	case taskQueue <- task:
+		// 成功提交到 worker pool
+	default:
+		// 队列满，直接执行避免请求堆积
+		go task()
+	}
 }

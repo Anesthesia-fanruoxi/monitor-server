@@ -38,7 +38,7 @@ func CheckTrafficSwitchingHeartbeats() {
 		}
 
 		// 如果超过 10 秒没有更新
-		if currentTime.Sub(timestamp) > 10*time.Second {
+		if currentTime.Sub(timestamp) > 20*time.Second {
 			service, project := parseTrafficSwitchingLabel(metricLabel)
 
 			if service != "" && project != "" {
